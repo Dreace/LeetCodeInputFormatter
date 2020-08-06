@@ -189,6 +189,16 @@ namespace LeetCodeInputFormatter
             //将变动消息WM_CHANGECBCHAIN消息传递到下一个观察链中的窗口
             SendMessage(nextClipHwnd, WM_CHANGECBCHAIN, Handle, nextClipHwnd);
         }
+
+        private void notifyIcon_Click(object sender, EventArgs e)
+        {
+            if(((MouseEventArgs)e).Button == MouseButtons.Left)
+            {
+                toggleEnableToolStripMenuItem.Checked = !toggleEnableToolStripMenuItem.Checked;
+                status.enable = toggleEnableToolStripMenuItem.Checked;
+                UpdateStatusLabel();
+            }
+        }
     }
     // 自定义类不能放在最开始，否则设计器不能正确识别
     class Status
