@@ -92,7 +92,7 @@ namespace LeetCodeInputFormatter
 
             if (idx != -1)
             {
-                return "[]" + (offset == 1 ? "byte" + t.Replace('\"', '\'') : "string" + t);
+                return "[]" + (offset == 2 ? "byte" + t.Replace('\"', '\'') : "string" + t);
             }
 
             return "[]int" + t;
