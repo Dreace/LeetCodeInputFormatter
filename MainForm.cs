@@ -17,26 +17,32 @@ namespace LeetCodeInputFormatter
     public partial class MainForm : Form
     {
         #region 剪贴板相关
+
         [System.Runtime.InteropServices.DllImport("user32")]
         private static extern IntPtr SetClipboardViewer(IntPtr hwnd);
+
         [System.Runtime.InteropServices.DllImport("user32")]
         private static extern IntPtr ChangeClipboardChain(IntPtr hwnd, IntPtr hWndNext);
+
         [System.Runtime.InteropServices.DllImport("user32")]
         private static extern int SendMessage(IntPtr hwnd, int wMsg, IntPtr wParam, IntPtr lParam);
 
         private const int WM_DRAWCLIPBOARD = 0x308;
         private const int WM_CHANGECBCHAIN = 0x30D;
         private IntPtr nextClipHwnd;
+
         #endregion
 
         [DllImport("user32.dll", CharSet = CharSet.Auto, ExactSpelling = true)]
         public static extern IntPtr GetForegroundWindow();
 
         private readonly Status status = new Status();
+
         // 支持的语言列表
-        private static readonly string[] languages = new string[] { "C/C++", "Python" };
+        private static readonly string[] languages = new string[] {"C/C++", "Python", "Go"};
 
         private string lastData = "";
+
         public MainForm()
         {
             InitializeComponent();
@@ -50,9 +56,46 @@ namespace LeetCodeInputFormatter
             {
                 languageToolStripMenuItem.DropDownItems.Add(language, null, new EventHandler(OnLanguageChanged));
             }
+
             languageToolStripMenuItem.Text = string.Format("语言（{0}）", languages[0]);
 
             UpdateStatusLabel();
+        }
+
+        private string GoFormat(string input)
+        {
+            string t = input.Replace('[', '{').Replace(']', '}').Replace('\n', ',');
+            bool hasDot = t.Contains('.');
+            if (hasDot)
+            {
+                return "[]float64" + t;
+            }
+
+            int idx = -1;
+            int offset = 0;
+
+            for (var i = 0; i < t.Length; i++)
+            {
+                if (t[i] == '\"')
+                {
+                    if (idx == -1)
+                    {
+                        idx = i;
+                    }
+                    else
+                    {
+                        offset = i - idx;
+                        break;
+                    }
+                }
+            }
+
+            if (idx != -1)
+            {
+                return "[]" + (offset == 2 ? "byte" + t.Replace('\"', '\'') : "string" + t);
+            }
+
+            return "[]int" + t;
         }
 
         // https://www.jianshu.com/p/b60b77fcb2a3
@@ -66,6 +109,7 @@ namespace LeetCodeInputFormatter
                     {
                         break;
                     }
+
                     Debug.WriteLine(m);
                     string type = ClipboardProcesser.GetDataTypeFromClipboard();
                     object data = ClipboardProcesser.GetDataFromClipboardByType(type);
@@ -74,30 +118,37 @@ namespace LeetCodeInputFormatter
                     {
                         if (status.enable)
                         {
-                            string input = (string)data;
-                            if(input == lastData)
+                            string input = (string) data;
+                            if (input == lastData)
                             {
                                 break;
                             }
-                            lastData = input;
+
                             string t = "";
-                            if (new string[] { "C/C++" }.Contains(status.language))
+                            if (new string[] {"C/C++"}.Contains(status.language))
                             {
                                 t = input.Replace('[', '{').Replace(']', '}').Replace('\n', ',');
                             }
-                            else if (new string[] { "Python" }.Contains(status.language))
+                            else if (new string[] {"Python"}.Contains(status.language))
                             {
                                 t = input.Replace('\n', ',');
                             }
+                            else if (new string[] {"Go"}.Contains(status.language))
+                            {
+                                t = GoFormat(input);
+                            }
+
                             if (!t.Equals(input))
                             {
+                                lastData = t;
                                 ClipboardProcesser.SetDataToClipboard(t, ClipboardDataFormat.TEXT);
                                 status.count++;
                             }
-
                         }
+
                         UpdateStatusLabel();
                     }
+
                     break;
                 case WM_CHANGECBCHAIN:
                     if (m.WParam == nextClipHwnd)
@@ -113,7 +164,7 @@ namespace LeetCodeInputFormatter
 
         private void OnLanguageChanged(object sender, EventArgs e)
         {
-            ToolStripMenuItem clickedItem = (ToolStripMenuItem)sender;
+            ToolStripMenuItem clickedItem = (ToolStripMenuItem) sender;
             status.language = clickedItem.Text;
             UpdateStatusLabel();
 
@@ -135,6 +186,7 @@ namespace LeetCodeInputFormatter
                 statuLabel.Text = "未启用";
                 statuLabel.ForeColor = Color.FromArgb(175, 64, 52);
             }
+
             languageLabel.Text = status.language;
             countLabel.Text = status.count.ToString();
         }
@@ -192,7 +244,7 @@ namespace LeetCodeInputFormatter
 
         private void notifyIcon_Click(object sender, EventArgs e)
         {
-            if(((MouseEventArgs)e).Button == MouseButtons.Left)
+            if (((MouseEventArgs) e).Button == MouseButtons.Left)
             {
                 toggleEnableToolStripMenuItem.Checked = !toggleEnableToolStripMenuItem.Checked;
                 status.enable = toggleEnableToolStripMenuItem.Checked;
@@ -200,6 +252,7 @@ namespace LeetCodeInputFormatter
             }
         }
     }
+
     // 自定义类不能放在最开始，否则设计器不能正确识别
     class Status
     {
@@ -215,42 +268,51 @@ namespace LeetCodeInputFormatter
         {
             get { return Color.FromArgb(145, 201, 247); }
         }
+
         public override Color MenuItemSelected
         {
             get { return Color.FromArgb(145, 201, 247); }
         }
+
         public override Color ToolStripDropDownBackground
         {
             get { return Color.FromArgb(240, 240, 240); }
         }
+
         public override Color ImageMarginGradientBegin
         {
             get { return Color.FromArgb(240, 240, 240); }
         }
+
         public override Color ImageMarginGradientMiddle
         {
             get { return Color.FromArgb(240, 240, 240); }
         }
+
         public override Color ImageMarginGradientEnd
         {
             get { return Color.FromArgb(240, 240, 240); }
         }
     }
+
     public class CustomContextMenuStripRenderer : ToolStripProfessionalRenderer
     {
         public CustomContextMenuStripRenderer()
             : base(new CustomContextMenuStripColorTable())
         {
         }
+
         protected override void OnRenderArrow(ToolStripArrowRenderEventArgs e)
         {
             e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
             var r = new Rectangle(e.ArrowRectangle.Location, e.ArrowRectangle.Size);
             r.Inflate(-2, -6);
-            e.Graphics.DrawLines(Pens.Black, new Point[]{
-        new Point(r.Left, r.Top),
-        new Point(r.Right, r.Top + r.Height /2),
-        new Point(r.Left, r.Top+ r.Height)});
+            e.Graphics.DrawLines(Pens.Black, new Point[]
+            {
+                new Point(r.Left, r.Top),
+                new Point(r.Right, r.Top + r.Height / 2),
+                new Point(r.Left, r.Top + r.Height)
+            });
         }
 
         protected override void OnRenderItemCheck(ToolStripItemImageRenderEventArgs e)
@@ -258,10 +320,12 @@ namespace LeetCodeInputFormatter
             e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
             var r = new Rectangle(e.ImageRectangle.Location, e.ImageRectangle.Size);
             r.Inflate(-4, -6);
-            e.Graphics.DrawLines(Pens.Black, new Point[]{
-        new Point(r.Left, r.Bottom - r.Height /2),
-        new Point(r.Left + r.Width /3,  r.Bottom),
-        new Point(r.Right, r.Top)});
+            e.Graphics.DrawLines(Pens.Black, new Point[]
+            {
+                new Point(r.Left, r.Bottom - r.Height / 2),
+                new Point(r.Left + r.Width / 3, r.Bottom),
+                new Point(r.Right, r.Top)
+            });
         }
     }
 }
