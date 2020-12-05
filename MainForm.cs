@@ -42,7 +42,6 @@ namespace LeetCodeInputFormatter
         private static readonly string[] languages = new string[] {"C/C++", "Python", "Go"};
 
         private string lastData = "";
-        private string rewriteData = "";
 
         public MainForm()
         {
@@ -120,12 +119,11 @@ namespace LeetCodeInputFormatter
                         if (status.enable)
                         {
                             string input = (string) data;
-                            if (input == lastData || rewriteData == input)
+                            if (input == lastData)
                             {
                                 break;
                             }
 
-                            lastData = input;
                             string t = "";
                             if (new string[] {"C/C++"}.Contains(status.language))
                             {
@@ -142,7 +140,7 @@ namespace LeetCodeInputFormatter
 
                             if (!t.Equals(input))
                             {
-                                rewriteData = t;
+                                lastData = t;
                                 ClipboardProcesser.SetDataToClipboard(t, ClipboardDataFormat.TEXT);
                                 status.count++;
                             }
